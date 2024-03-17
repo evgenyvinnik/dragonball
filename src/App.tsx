@@ -3,6 +3,7 @@ import { useState } from "react";
 
 import {
   GoogleMap,
+  DistanceMatrixService,
   useLoadScript,
   Marker,
   LoadScriptProps,
@@ -52,6 +53,7 @@ function App() {
     "Click on the land to place your first Dragonball"
   );
   const [message, setMessage] = useState("");
+  const [totalDistance, setTotalDistance] = useState(0);
 
   const [open, setOpen] = useState(false);
 
@@ -136,8 +138,68 @@ function App() {
     return randomMarkers;
   };
 
-  const moveMarkers = () => {
-    console.log("optimizing");
+  function haversine(
+    coord1: google.maps.LatLngLiteral,
+    coord2: google.maps.LatLngLiteral
+  ) {
+    const toRadians = (degrees: number) => {
+      return degrees * (Math.PI / 180);
+    };
+
+    const earthRadiusKm = 6371;
+
+    const dLat = toRadians(coord2.lat - coord1.lat);
+    const dLon = toRadians(coord2.lng - coord1.lng);
+
+    const lat1 = toRadians(coord1.lat);
+    const lat2 = toRadians(coord2.lat);
+
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    const distance = earthRadiusKm * c;
+    return distance;
+  }
+
+  const calculateDistance = (markers: google.maps.LatLngLiteral[]): number => {
+    let distance = 0;
+    for (let i = 0; i < markers.length; i++) {
+      for (let j = i + 1; j < markers.length; j++) {
+        distance += haversine(markers[i], markers[j]);
+      }
+    }
+    return distance;
+  };
+
+  const optimizeMarkers = async () => {
+    if (markers != null) {
+      let newMarkers = markers;
+      for (let i = 1; i < newMarkers.length; i++) {
+        for (let j = 0; j < maxMoves; j++) {
+          const randomMarker = await addRandomMarker();
+          if (randomMarker) {
+            const oldMarker = newMarkers[i];
+            newMarkers[i] = randomMarker;
+            const newDistance = calculateDistance(newMarkers);
+            console.info("new distance " + newDistance);
+            if (newDistance > totalDistance) {
+              setMarkers(newMarkers);
+              setTotalDistance(newDistance);
+              setCommand(
+                `Current overall distance between all placed Dragonballs is ${newDistance.toFixed(
+                  2
+                )} km`
+              );
+            } else {
+              newMarkers[i] = oldMarker;
+            }
+          }
+        }
+      }
+    }
   };
 
   const onMapClick = async (e: google.maps.MapMouseEvent) => {
@@ -145,7 +207,16 @@ function App() {
       const marker = await getMarker(e.latLng.lat(), e.latLng.lng(), true);
       if (marker != null) {
         const randomMarkers = await addRandomMarkers();
-        setMarkers([marker, ...randomMarkers]);
+
+        const markers = [marker, ...randomMarkers];
+        const distance = calculateDistance(markers);
+        setCommand(
+          `Current overall distance between all placed Dragonballs is ${distance.toFixed(
+            2
+          )} km`
+        );
+        setTotalDistance(distance);
+        setMarkers(markers);
       }
     }
   };
@@ -178,8 +249,8 @@ function App() {
             {command}
           </Typography>
           {markers != null ? (
-            <Button color="inherit" onClick={moveMarkers}>
-              Optimize
+            <Button color="inherit" onClick={optimizeMarkers}>
+              Optimize placement
             </Button>
           ) : null}
         </Toolbar>
