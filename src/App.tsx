@@ -1,15 +1,17 @@
 import "./App.css";
-import { useState } from "react";
+import { SetStateAction, useState } from "react";
 
 import {
   GoogleMap,
   useLoadScript,
+  InfoWindow,
   Marker,
   LoadScriptProps,
 } from "@react-google-maps/api";
 import Snackbar from "@mui/material/Snackbar";
 import Box from "@mui/material/Box";
 import { AppBar, Toolbar } from "@mui/material";
+import { setDefaults, fromLatLng, OutputFormat } from "react-geocode";
 
 const googleMapsLibraries: LoadScriptProps["libraries"] = ["places"];
 
@@ -26,15 +28,21 @@ const otherBallsCount = 6;
 const maxTries = 10;
 const maxMoves = 30;
 
+const API_KEY = "AIzaSyBMid2MJczEm0Y_8P5HgCkSrw-iev-EtX0";
+
+setDefaults({
+  key: "AIzaSyBMid2MJczEm0Y_8P5HgCkSrw-iev-EtX0",
+  language: "en",
+  region: "en",
+  outputFormat: OutputFormat.JSON,
+  enable_address_descriptor: true,
+});
+
 function App() {
   const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: "AIzaSyBMid2MJczEm0Y_8P5HgCkSrw-iev-EtX0",
+    googleMapsApiKey: API_KEY,
     libraries: googleMapsLibraries,
   });
-
-  // const [marker, setMarker] = useState<google.maps.LatLngLiteral | undefined>(
-  //   undefined
-  // );
 
   const [markers, setMarkers] = useState<
     google.maps.LatLngLiteral[] | undefined
@@ -44,25 +52,50 @@ function App() {
 
   const [open, setOpen] = useState(false);
 
-  const addRandomMarkers = () => {
-    for (let i = 0; i < otherBallsCount; i++) {}
-  };
+  // const addRandomMarkers = () => {
+  //   for (let i = 0; i < otherBallsCount; i++) {}
+  // };
 
-  const moveMarkers = () => {};
+  // const moveMarkers = () => {};
 
   const onMapClick = (e: google.maps.MapMouseEvent) => {
     if (e.latLng != null) {
       let newMarkers: google.maps.LatLngLiteral[] = [];
+      let lat = e.latLng.lat();
+      let lng = e.latLng.lng();
       let newMarker = {
-        lat: e.latLng.lat(),
-        lng: e.latLng.lng(),
+        lat: lat,
+        lng: lng,
       };
-      newMarkers.push(newMarker);
-      setMarkers(newMarkers);
-      setMessage(
-        `Set marker at latitude: ${e.latLng.lat()} and longitude: ${e.latLng.lng()} `
+
+      fromLatLng(lat, lng).then(
+        ({ results }) => {
+          const lastResponse = results[results.length - 1];
+
+          if (
+            lastResponse.types.includes("country") ||
+            lastResponse.types.includes("political")
+          ) {
+            const country = lastResponse.formatted_address;
+
+            newMarkers.push(newMarker);
+            setMarkers(newMarkers);
+            setMessage(
+              `Placed dragonball at latitude: ${lat} and longitude: ${lng}, which is somewhere in ${country}`
+            );
+          } else {
+            setMessage("Place your dragonball on land and not in the sea!");
+          }
+          setOpen(true);
+        },
+        (error) => {
+          setMessage(
+            "Failed to reverse geocode the position on the map you have clicked on!"
+          );
+          setOpen(true);
+          console.error(error);
+        }
       );
-      setOpen(true);
     }
   };
 
