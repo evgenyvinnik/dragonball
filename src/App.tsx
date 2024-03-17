@@ -60,6 +60,12 @@ function App() {
               lat: marker.lat,
               lng: marker.lng,
             }}
+            icon={{
+              // path: google.maps.SymbolPath.CIRCLE,
+              url: require("./assets/Dragonball-1.ico"),
+              fillColor: "#EB00FF",
+              scale: 7,
+            }}
           />
         ) : null}
       </GoogleMap>
