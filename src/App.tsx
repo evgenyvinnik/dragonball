@@ -175,6 +175,7 @@ function App() {
   };
 
   const optimizeMarkers = async () => {
+    let currentTotalDistance = totalDistance;
     if (markers != null) {
       let newMarkers = markers;
       for (let i = 1; i < newMarkers.length; i++) {
@@ -185,7 +186,8 @@ function App() {
             newMarkers[i] = randomMarker;
             const newDistance = calculateDistance(newMarkers);
             console.info("new distance " + newDistance);
-            if (newDistance > totalDistance) {
+            if (newDistance > currentTotalDistance) {
+              currentTotalDistance = newDistance;
               setMarkers(newMarkers);
               setTotalDistance(newDistance);
               setCommand(
