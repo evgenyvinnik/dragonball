@@ -1,10 +1,9 @@
 import "./App.css";
-import { SetStateAction, useState } from "react";
+import { useState } from "react";
 
 import {
   GoogleMap,
   useLoadScript,
-  InfoWindow,
   Marker,
   LoadScriptProps,
 } from "@react-google-maps/api";
@@ -12,7 +11,8 @@ import Snackbar from "@mui/material/Snackbar";
 import Box from "@mui/material/Box";
 import { AppBar, Toolbar } from "@mui/material";
 import { setDefaults, fromLatLng, OutputFormat } from "react-geocode";
-
+import Button from "@mui/material/Button";
+import Typography from "@mui/material/Typography";
 const googleMapsLibraries: LoadScriptProps["libraries"] = ["places"];
 
 const mapContainerStyle = {
@@ -25,7 +25,7 @@ const center: google.maps.LatLngLiteral = {
 };
 
 const otherBallsCount = 6;
-const maxTries = 10;
+const maxTries = 100;
 const maxMoves = 30;
 
 const API_KEY = "AIzaSyBMid2MJczEm0Y_8P5HgCkSrw-iev-EtX0";
@@ -48,6 +48,9 @@ function App() {
     google.maps.LatLngLiteral[] | undefined
   >(undefined);
 
+  const [command, setCommand] = useState(
+    "Click on the land to place your first Dragonball"
+  );
   const [message, setMessage] = useState("");
 
   const [open, setOpen] = useState(false);
@@ -57,66 +60,93 @@ function App() {
     northeast: { lat: 90, lng: 180 },
   };
 
-  const addRandomMarker = (newMarkers: google.maps.LatLngLiteral[]) => {
+  const getMarker = async (lat: number, lng: number, addMessage: boolean) => {
+    const marker = await fromLatLng(lat, lng).then(
+      ({ results }) => {
+        const lastResponse = results[results.length - 1];
+
+        if (
+          lastResponse.types.includes("country") ||
+          lastResponse.types.includes("political")
+        ) {
+          const country = lastResponse.formatted_address;
+          const message = `Placed dragonball at latitude: ${lat} and longitude: ${lng}, which is somewhere in ${country}`;
+          if (addMessage) {
+            setMessage(message);
+            setOpen(true);
+          } else {
+            console.log(message);
+          }
+          return {
+            lat: lat,
+            lng: lng,
+          };
+        } else {
+          if (addMessage) {
+            setMessage("Place your dragonball on land and not in the sea!");
+            setOpen(true);
+          } else {
+            console.warn("failed to add random land point");
+          }
+          return null;
+        }
+      },
+      (error) => {
+        if (addMessage) {
+          setMessage(
+            "Failed to reverse geocode the position on the map you have clicked on!"
+          );
+          setOpen(true);
+        }
+        console.error(error);
+        return null;
+      }
+    );
+
+    return marker;
+  };
+
+  const addRandomMarker = async () => {
     const randomLat =
       boundingBox.southwest.lat +
       Math.random() * (boundingBox.northeast.lat - boundingBox.southwest.lat);
     const randomLng =
       boundingBox.southwest.lng +
       Math.random() * (boundingBox.northeast.lng - boundingBox.southwest.lng);
-    const randomPoint = { lat: randomLat, lng: randomLng };
-    newMarkers.push(randomPoint);
+
+    return await getMarker(randomLat, randomLng, false);
   };
 
-  const addRandomMarkers = (newMarkers: google.maps.LatLngLiteral[]) => {
-    for (let i = 0; i < otherBallsCount; i++) {
-      addRandomMarker(newMarkers);
+  const addRandomMarkers = async () => {
+    const randomMarkers: google.maps.LatLngLiteral[] = [];
+    let tries = 0;
+    while (randomMarkers.length < otherBallsCount && tries < maxTries) {
+      const randomMarker = await addRandomMarker();
+      if (randomMarker != null) {
+        randomMarkers.push(randomMarker);
+      }
+      tries++;
+      console.log("trying to add random point " + tries);
     }
+
+    if (randomMarkers.length < otherBallsCount) {
+      setMessage("Failed to randomly place 6 other Dragonballs");
+      setOpen(true);
+    }
+    return randomMarkers;
   };
 
-  // const moveMarkers = () => {};
+  const moveMarkers = () => {
+    console.log("optimizing");
+  };
 
-  const onMapClick = (e: google.maps.MapMouseEvent) => {
+  const onMapClick = async (e: google.maps.MapMouseEvent) => {
     if (e.latLng != null) {
-      let newMarkers: google.maps.LatLngLiteral[] = [];
-      let lat = e.latLng.lat();
-      let lng = e.latLng.lng();
-      let newMarker = {
-        lat: lat,
-        lng: lng,
-      };
-
-      fromLatLng(lat, lng).then(
-        ({ results }) => {
-          const lastResponse = results[results.length - 1];
-
-          if (
-            lastResponse.types.includes("country") ||
-            lastResponse.types.includes("political")
-          ) {
-            const country = lastResponse.formatted_address;
-
-            newMarkers.push(newMarker);
-
-            addRandomMarkers(newMarkers);
-
-            setMarkers(newMarkers);
-            setMessage(
-              `Placed dragonball at latitude: ${lat} and longitude: ${lng}, which is somewhere in ${country}`
-            );
-          } else {
-            setMessage("Place your dragonball on land and not in the sea!");
-          }
-          setOpen(true);
-        },
-        (error) => {
-          setMessage(
-            "Failed to reverse geocode the position on the map you have clicked on!"
-          );
-          setOpen(true);
-          console.error(error);
-        }
-      );
+      const marker = await getMarker(e.latLng.lat(), e.latLng.lng(), true);
+      if (marker != null) {
+        const randomMarkers = await addRandomMarkers();
+        setMarkers([marker, ...randomMarkers]);
+      }
     }
   };
 
@@ -143,8 +173,15 @@ function App() {
     <div className="App">
       <AppBar position="sticky">
         <Toolbar>
-          Dragonball placement tool: click on the land to place your first
-          Dragonball
+          <Button variant="outlined">Outlined</Button>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            {command}
+          </Typography>
+          {markers != null ? (
+            <Button color="inherit" onClick={moveMarkers}>
+              Optimize
+            </Button>
+          ) : null}
         </Toolbar>
       </AppBar>
       <Box
@@ -161,7 +198,7 @@ function App() {
           center={center}
           onClick={onMapClick}
         >
-          {markers
+          {markers != null
             ? markers.map((marker, index) => (
                 <Marker
                   key={index}
