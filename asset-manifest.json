@@ -1,13 +1,20 @@
 {
   "files": {
-    "main.css": "/dragonball/static/css/main.f855e6bc.css",
-    "main.js": "/dragonball/static/js/main.a44e2ef5.js",
+    "main.css": "/dragonball/static/css/main.9b832301.css",
+    "main.js": "/dragonball/static/js/main.f3a34350.js",
+    "static/media/Dragonball-1.ico": "/dragonball/static/media/Dragonball-1.ff99532b5d506d9b01fa.ico",
+    "static/media/Dragonball-2.ico": "/dragonball/static/media/Dragonball-2.87dc2a6ef40f5fa914ab.ico",
+    "static/media/Dragonball-3.ico": "/dragonball/static/media/Dragonball-3.54f0a04525ba53de2385.ico",
+    "static/media/Dragonball-4.ico": "/dragonball/static/media/Dragonball-4.52595327e6a2ef0571dd.ico",
+    "static/media/Dragonball-5.ico": "/dragonball/static/media/Dragonball-5.096392b8b0e136fb1b78.ico",
+    "static/media/Dragonball-6.ico": "/dragonball/static/media/Dragonball-6.03a8cbd19f6d973c77dc.ico",
+    "static/media/Dragonball-7.ico": "/dragonball/static/media/Dragonball-7.6c6ecaa1c9c06fe7a52d.ico",
     "index.html": "/dragonball/index.html",
-    "main.f855e6bc.css.map": "/dragonball/static/css/main.f855e6bc.css.map",
-    "main.a44e2ef5.js.map": "/dragonball/static/js/main.a44e2ef5.js.map"
+    "main.9b832301.css.map": "/dragonball/static/css/main.9b832301.css.map",
+    "main.f3a34350.js.map": "/dragonball/static/js/main.f3a34350.js.map"
   },
   "entrypoints": [
-    "static/css/main.f855e6bc.css",
-    "static/js/main.a44e2ef5.js"
+    "static/css/main.9b832301.css",
+    "static/js/main.f3a34350.js"
   ]
 }
