@@ -52,9 +52,27 @@ function App() {
 
   const [open, setOpen] = useState(false);
 
-  // const addRandomMarkers = () => {
-  //   for (let i = 0; i < otherBallsCount; i++) {}
-  // };
+  const boundingBox = {
+    southwest: { lat: -90, lng: -180 },
+    northeast: { lat: 90, lng: 180 },
+  };
+
+  const addRandomMarker = (newMarkers: google.maps.LatLngLiteral[]) => {
+    const randomLat =
+      boundingBox.southwest.lat +
+      Math.random() * (boundingBox.northeast.lat - boundingBox.southwest.lat);
+    const randomLng =
+      boundingBox.southwest.lng +
+      Math.random() * (boundingBox.northeast.lng - boundingBox.southwest.lng);
+    const randomPoint = { lat: randomLat, lng: randomLng };
+    newMarkers.push(randomPoint);
+  };
+
+  const addRandomMarkers = (newMarkers: google.maps.LatLngLiteral[]) => {
+    for (let i = 0; i < otherBallsCount; i++) {
+      addRandomMarker(newMarkers);
+    }
+  };
 
   // const moveMarkers = () => {};
 
@@ -79,6 +97,9 @@ function App() {
             const country = lastResponse.formatted_address;
 
             newMarkers.push(newMarker);
+
+            addRandomMarkers(newMarkers);
+
             setMarkers(newMarkers);
             setMessage(
               `Placed dragonball at latitude: ${lat} and longitude: ${lng}, which is somewhere in ${country}`
@@ -149,7 +170,7 @@ function App() {
                     lng: marker.lng,
                   }}
                   icon={{
-                    url: require("./assets/Dragonball-1.ico"),
+                    url: require(`./assets/Dragonball-${index + 1}.ico`),
                     fillColor: "#EB00FF",
                     scale: 7,
                   }}
