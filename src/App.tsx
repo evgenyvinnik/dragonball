@@ -1,4 +1,5 @@
 import "./App.css";
+import { useState } from "react";
 
 import {
   GoogleMap,
@@ -13,7 +14,7 @@ const mapContainerStyle = {
   width: "100vw",
   height: "100vh",
 };
-const center = {
+const center: google.maps.LatLngLiteral = {
   lat: 7.2905715, // default latitude
   lng: 80.6337262, // default longitude
 };
@@ -23,6 +24,19 @@ function App() {
     googleMapsApiKey: "AIzaSyBMid2MJczEm0Y_8P5HgCkSrw-iev-EtX0",
     libraries: googleMapsLibraries,
   });
+
+  const [marker, setMarker] = useState<google.maps.LatLngLiteral | undefined>(
+    undefined
+  );
+
+  const onMapClick = (e: google.maps.MapMouseEvent) => {
+    if (e.latLng != null) {
+      setMarker({
+        lat: e.latLng.lat(),
+        lng: e.latLng.lng(),
+      });
+    }
+  };
 
   if (loadError) {
     return <div>Error loading maps</div>;
@@ -36,10 +50,18 @@ function App() {
     <div>
       <GoogleMap
         mapContainerStyle={mapContainerStyle}
-        zoom={10}
+        zoom={2}
         center={center}
+        onClick={onMapClick}
       >
-        <Marker position={center} />
+        {marker ? (
+          <Marker
+            position={{
+              lat: marker.lat,
+              lng: marker.lng,
+            }}
+          />
+        ) : null}
       </GoogleMap>
     </div>
   );
